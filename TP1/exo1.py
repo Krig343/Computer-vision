@@ -34,8 +34,8 @@ cv.imshow("V",v)
 cv.imshow("HSV",img_hsv)
 cv.waitKey(0)
 
-cv.imwrite("new_img.png", v)
+cv.imwrite("newimg.png", v)
 
-cv.imshow("new",cv.imread("new_img.png"))
+cv.imshow("new",cv.imread("newimg.png"))
 cv.waitKey(0)
 cv.destroyAllWindows()
