@@ -1,4 +1,4 @@
-# Utiliser avec new_img.png
+# Utiliser avec newimg.png et lion.png
 
 import cv2 as cv
 import sys
