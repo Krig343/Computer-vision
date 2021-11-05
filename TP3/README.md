@@ -30,7 +30,7 @@ Le filtre prend en entrée une image (on se limitera aux images en niveaux de gr
 ### 1. Réduction du bruit
 
 Cette étape filtre l'image d'entrée par convolution avec un filtre gaussien dont l'écart-type est passé en paramètre.
-Écrire une fonction  `gaussianFiltering(f)` qui applique sur l'image $`f`$ un filtre gaussien d'écart-type $`\sigma`$.
+Écrire une fonction  `gaussianFiltering(f,s)` qui applique sur l'image $`f`$ un filtre gaussien d'écart-type s=$`\sigma`$.
 Cette fonction retourne une image à valeurs réelles.
 
 ### 2. Gradient de l'image
