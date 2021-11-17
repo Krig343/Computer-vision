@@ -89,7 +89,8 @@ def removeNonMaxima(grad_m, grad_d):
     return img
 
 def computeThresholds(grad_maxima,  alpha,  beta):
-    temp = grad_maxima.flatten()
+    copy = grad_maxima
+    temp = copy.flatten()
     t = sorted(temp)
     thigh = t[round(alpha * len(t))-1]
     tlow = beta * thigh
@@ -185,13 +186,11 @@ while(1):
     print("Seuil bas : " + str(low))
 
     mycanny = hysteresisThresholding(gmax, low, high)     
-    cannyFile = open("Filtre de conny.txt","w")
+    cannyFile = open("Filtre de canny.txt","w")
     cannyFile.write(str(mycanny))
     cannyFile.close()
-    cv.imshow("controls",mycanny)
 
     canny = cv.Canny(blur, a, b, L2gradient=True)
-    cv.imshow("controls",canny)
 
     res = np.concatenate((mycanny, canny), axis=1)
     cv.imshow('controls', res)
