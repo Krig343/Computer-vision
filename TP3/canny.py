@@ -11,13 +11,13 @@ if len(sys.argv) < 5:
 if int(sys.argv[2]) <= 0:
     sys.exit("La valeur de sigma doit être posiitve")
 
-if int(sys.argv[3]) < 0 or int(sys.argv[3]) > 100:
-    sys.exit("alpha doit avoir une valeur comprise entre 0 et 100")
+if float(sys.argv[3]) < 0 or float(sys.argv[3]) > 1:
+    sys.exit("alpha doit avoir une valeur comprise entre 0 et 1")
 
-if int(sys.argv[4]) < 0 or int(sys.argv[4]) > 100:
-    sys.exit("beta doit avoir une valeur comprise entre 0 et 100")
+if float(sys.argv[4]) < 0 or float(sys.argv[4]) > 1:
+    sys.exit("beta doit avoir une valeur comprise entre 0 et 1")
 
-if int(sys.argv[3]) < int(sys.argv[4]):
+if float(sys.argv[3]) < float(sys.argv[4]):
     sys.exit("alpha doit être supérieur à beta")
 
 img = cv.imread(sys.argv[1])
@@ -38,18 +38,18 @@ def computeGy(img):
 def computeMagnitude(Gx,Gy):
     size = np.shape(Gx)
     M = np.zeros(size)
-    for x in range(0,size[0]):
-        for y in range(0,size[1]):
-            M[x,y] = math.sqrt((Gx[x,y]**2)+(Gy[x,y]**2))
-            if M[x,y] > 255:
-                M[x,y] = 255
+    for x in range(size[0]):
+        for y in range(size[1]):
+            M[x,y] = math.hypot(Gx[x,y],Gy[x,y])
+            if M[x,y] > 255.:
+                M[x,y] = 255.
     return M
 
 def computeDirection(Gx,Gy):
     size = np.shape(Gx)
     Teta = np.zeros(size)
-    for x in range(0,size[0]):
-        for y in range(0,size[1]):
+    for x in range(size[0]):
+        for y in range(size[1]):
             Teta[x,y] = math.atan2(Gy[x,y],Gx[x,y])
     return Teta
 
@@ -66,31 +66,22 @@ def removeNonMaxima(grad_m, grad_d):
             elif grad_d[x,y] >= 7*Pi/8:
                 grad_d[x,y] -= Pi
             if grad_d[x,y] >= -Pi/8 and grad_d[x,y] < Pi/8:
-                if y+1 < ymax and grad_m[x,y+1] > grad_m[x,y]:
-                    img[x,y] = 0.
-                elif y-1 > 0 and grad_m[x,y-1] > grad_m[x,y]:
+                if (x+1 < xmax and grad_m[x+1,y] > grad_m[x,y]) or (x-1 > 0 and grad_m[x-1,y] > grad_m[x,y]):
                     img[x,y] = 0.
                 else:
                     img[x,y] = grad_m[x,y]
             elif grad_d[x,y] >= Pi/8 and grad_d[x,y] < 3*Pi/8:
-                if (y-1 > 0 and x-1 > 0) and grad_m[x-1,y-1] > grad_m[x,y]:
-                    img[x,y] = 0.
-                elif (y+1 < ymax and x+1 < xmax) and grad_m[x+1,y+1] > grad_m[x,y]:
+                if ((y-1 > 0 and x-1 > 0) and grad_m[x-1,y-1] > grad_m[x,y]) or ((y+1 < ymax and x+1 < xmax) and grad_m[x+1,y+1] > grad_m[x,y]):
                     img[x,y] = 0.
                 else:
                     img[x,y] = grad_m[x,y]
             elif grad_d[x,y] >= 3*Pi/8 and grad_d[x,y] < 5*Pi/8:
-                
-                if x-1 > 0 and grad_m[x-1,y] > grad_m[x,y]:
-                    img[x,y] = 0.
-                elif x+1 < xmax and grad_m[x+1,y] > grad_m[x,y]:
+                if (y-1 > 0 and grad_m[x,y-1] > grad_m[x,y]) or (y+1 < ymax and grad_m[x,y+1] > grad_m[x,y]):
                     img[x,y] = 0.
                 else:
                     img[x,y] = grad_m[x,y]
             elif grad_d[x,y] >= 5*Pi/8 and grad_d[x,y] < 7*Pi/8:
-                if (x-1 > 0 and y+1 < ymax) and grad_m[x-1,y+1] > grad_m[x,y]:
-                    img[x,y] = 0.
-                elif (y-1 > 0 and x+1 < xmax) and grad_m[x+1,y-1] > grad_m[x,y]:
+                if ((x-1 > 0 and y+1 < ymax) and grad_m[x-1,y+1] > grad_m[x,y]) or ((y-1 > 0 and x+1 < xmax) and grad_m[x+1,y-1] > grad_m[x,y]):
                     img[x,y] = 0.
                 else:
                     img[x,y] = grad_m[x,y]
@@ -109,14 +100,14 @@ def hysteresisThresholding(grad_maxima, tLow, tHigh):
     xmax = size[0]
     ymax = size[1]
     canny = np.zeros(size)
-    for x in range(0,xmax):
-        for y in range(0,ymax):
+    for x in range(xmax):
+        for y in range(ymax):
             if grad_maxima[x,y] >= tHigh:
                 fifo.append((x,y))
                 canny[x,y] = 255
             else:
                 canny[x,y] = 0
-    while(len(fifo) != 0):
+    while(len(fifo) > 0):
         p = fifo.pop()
         x = p[0]
         y = p[1]
@@ -159,8 +150,8 @@ def passFunction():
 
 cv.namedWindow('controls')
 cv.createTrackbar('sigma','controls',int(sys.argv[2]),10,passFunction)
-cv.createTrackbar('alpha','controls',int(sys.argv[3]),100,passFunction)
-cv.createTrackbar('beta','controls',int(sys.argv[4]),100,passFunction)
+cv.createTrackbar('alpha','controls',int(float(sys.argv[3])*100),100,passFunction)
+cv.createTrackbar('beta','controls',int(float(sys.argv[4])*100),100,passFunction)
 
 while(1):
 
@@ -198,7 +189,7 @@ while(1):
     cannyFile.close()
     cv.imshow("controls",mycanny)
 
-    canny = cv.Canny(img_origin, a, b, L2gradient=True)
+    canny = cv.Canny(blur, a, b, L2gradient=True)
     cv.imshow("controls",canny)
 
     res = np.concatenate((mycanny, canny), axis=1)
