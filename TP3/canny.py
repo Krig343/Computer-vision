@@ -2,6 +2,7 @@ import cv2 as cv
 import sys
 import numpy as np
 import math
+import queue
 np.set_printoptions(threshold=sys.maxsize)
 
 if len(sys.argv) < 5:
@@ -95,7 +96,7 @@ def computeThresholds(grad_maxima,  alpha,  beta):
     return thigh, tlow
 
 def hysteresisThresholding(grad_maxima, tLow, tHigh):
-    fifo = []
+    fifo = queue.Queue()
     size = np.shape(grad_maxima)
     xmax = size[0]
     ymax = size[1]
@@ -103,46 +104,46 @@ def hysteresisThresholding(grad_maxima, tLow, tHigh):
     for x in range(xmax):
         for y in range(ymax):
             if grad_maxima[x,y] >= tHigh:
-                fifo.append((x,y))
+                fifo.put((x,y))
                 canny[x,y] = 255
             else:
                 canny[x,y] = 0
-    while(len(fifo) > 0):
-        p = fifo.pop()
+    while(not fifo.empty()):
+        p = fifo.get()
         x = p[0]
         y = p[1]
         #voisin droite
-        if x+1 < xmax and grad_maxima[x+1,y] >= tLow and canny[x+1,y]==0:
+        if x+1 < xmax and canny[x+1,y]==0 and grad_maxima[x+1,y] >= tLow:
             canny[x+1,y] = 255
-            fifo.append((x+1,y))
+            fifo.put((x+1,y))
         #voisin haut droite
-        if (x+1 < xmax and y+1 < ymax) and grad_maxima[x+1,y+1] >= tLow and canny[x+1,y+1]==0:
+        if (x+1 < xmax and y+1 < ymax) and canny[x+1,y+1]==0 and grad_maxima[x+1,y+1] >= tLow:
             canny[x+1,y+1] = 255
-            fifo.append((x+1,y+1))
+            fifo.put((x+1,y+1))
         #voisin haut
-        if y+1 < ymax and grad_maxima[x,y+1] >= tLow and canny[x,y+1]==0:
+        if y+1 < ymax and canny[x,y+1]==0 and grad_maxima[x,y+1] >= tLow:
             canny[x,y+1] = 255
-            fifo.append((x,y+1))
+            fifo.put((x,y+1))
         #voisin haut gauche
-        if (x-1 > 0 and y+1 < ymax) and grad_maxima[x-1,y+1] >= tLow and canny[x-1,y+1]==0:
+        if (x-1 > 0 and y+1 < ymax) and canny[x-1,y+1]==0 and grad_maxima[x-1,y+1] >= tLow:
             canny[x-1,y+1] = 255
-            fifo.append((x-1,y+1))
+            fifo.put((x-1,y+1))
         #voisin gauche
-        if x-1 > 0 and grad_maxima[x-1,y] >= tLow and canny[x-1,y]==0:
+        if x-1 > 0 and canny[x-1,y]==0 and grad_maxima[x-1,y] >= tLow:
             canny[x-1,y] = 255
-            fifo.append((x-1,y))
+            fifo.put((x-1,y))
         #voisin bas gauche
-        if (x-1 > 0 and y-1 > 0) and grad_maxima[x-1,y-1] >= tLow and canny[x-1,y-1]==0:
+        if (x-1 > 0 and y-1 > 0) and canny[x-1,y-1]==0 and grad_maxima[x-1,y-1] >= tLow:
             canny[x-1,y-1] = 255
-            fifo.append((x-1,y-1))
+            fifo.put((x-1,y-1))
         #voisin bas
-        if y-1 > 0 and grad_maxima[x,y-1] >= tLow and canny[x,y-1]==0:
+        if y-1 > 0 and canny[x,y-1]==0 and grad_maxima[x,y-1] >= tLow:
             canny[x,y-1] = 255
-            fifo.append((x,y-1))
+            fifo.put((x,y-1))
         #voisin bas droite
-        if (x+1 < xmax and y-1 > 0) and grad_maxima[x+1,y-1] >= tLow and canny[x+1,y-1]==0:
+        if (x+1 < xmax and y-1 > 0) and canny[x+1,y-1]==0 and grad_maxima[x+1,y-1] >= tLow:
             canny[x+1,y-1] = 255
-            fifo.append((x+1,y-1))
+            fifo.put((x+1,y-1))
     return canny
 
 def passFunction():
