@@ -32,12 +32,12 @@ def update_rot(s):
     cv.imshow("rotation 1",rotv1)
 
 def update_cx(s):
-    rotv1 = rotationv1(img, (s,float(sys.argv[5])), float(sys.argv[6]))
-    cv.imshow("rotation 1",rotv1)
+    tran = translation(img, (s,float(sys.argv[5])), float(sys.argv[6]))
+    cv.imshow("rotation 1",tran)
 
 def update_cy(s):
-    rotv1 = rotationv1(img, (float(sys.argv[4]),s), float(sys.argv[6]))
-    cv.imshow("rotation 1",rotv1)
+    tran = rotationv1(img, (float(sys.argv[4]),s), float(sys.argv[6]))
+    cv.imshow("rotation 1",tran)
 
 img = cv.imread(sys.argv[1])
 
