@@ -1,10 +1,11 @@
 import cv2 as cv
 import numpy as np
 import sys
+from scipy.ndimage.interpolation import shift
 
 def scale (img, t):
     shape = np.shape(img)
-    size = (shape[0],shape[1]) #peut-être inverser
+    size = (shape[0],shape[1])
     M = np.float32([[t, 0, 1], [0, t, 1]])
     return cv.warpAffine(img, M, size)
 
@@ -13,7 +14,7 @@ def rotation (img, a):
     width = img.shape[1]
     center = (height/2, width/2)
     M = cv.getRotationMatrix2D(center, a, 1)
-    size = (height,width) #peut-être inverser
+    size = (height,width)
     return cv.warpAffine(img, M, size)
 
 def perspective (img, p, q, k, l):
@@ -35,6 +36,21 @@ def computeHarris (img):
     harrised = cv.cornerHarris(gray,3,3,0.04)
     harrised = cv.dilate(harrised,None)
     img[harrised>0.01*harrised.max()]=[0,0,255]
+    cv.imshow('Harris cv',img)
+
+def computeMyHarris (img):
+    img = scale (img, taille)
+    img = rotation (img, angle)
+    if persp:
+        img = perspective (img, p1, p2, p3, p4)
+    gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    gray = np.float32(gray)
+    gray = addNoise(gray, noise)
+    gray = np.uint8(gray)
+    harrised = computeR(gray)
+    dilated = cv.dilate(harrised,None)
+    img[harrised != dilated]=0
+    img[dilated>0.01*dilated.max()]=[0,0,255]
     cv.imshow('Harris cv',img)
 
 def computeShiTomasi (img):
@@ -83,19 +99,36 @@ def computeORB (img):
     cv.imshow('Harris cv', img2)
 
 
-# def computeIx(image):
-#     return cv.Sobel(image, -1, 1, 0, 3)
+def computeIx(img):
+    return cv.Sobel(img, -1, 1, 0, 3)
 
-# def computeIy(img):
-#     return cv.Sobel(img, -1, 0, 1, 3)
+def computeIy(img):
+    return cv.Sobel(img, -1, 0, 1, 3)
 
-# def computeSommeI (image):
-#     Ix = computeIx(image)
-#     Iy = computeIy(image)
-#     #A finir
+def computeSommeI (Ix, Iy):
+    sommeI = np.zeros_like(Ix)
+    sommeI += Ix * Iy
+    sommeI += shift(Ix, 1.0) * shift(Iy, 1.0)
+    sommeI += shift(Ix, -1.0) * shift(Iy, -1.0)
+    sommeI += shift(Ix, [1.0,0.0]) * shift(Iy, [1.0,0.0])
+    sommeI += shift(Ix, [-1.0,0.0]) * shift(Iy, [-1.0,0.0])
+    sommeI += shift(Ix, [0.0,1.0]) * shift(Iy, [0.0,1.0])
+    sommeI += shift(Ix, [0.0,-1.0]) * shift(Iy, [0.0,-1.0])
+    sommeI += shift(Ix, [1.0,-1.0]) * shift(Iy, [1.0,-1.0])
+    sommeI += shift(Ix, [-1.0,1.0]) * shift(Iy, [-1.0,1.0])
+    return sommeI
 
-# def computeR (mat):
-#     pass#A finir
+def computeR (img):
+    Ix = computeIx(img)
+    Iy = computeIx(img)
+    Ix2 = computeSommeI (Ix, Ix)
+    Iy2 = computeSommeI (Iy, Iy)
+    Ixy = computeSommeI (Ix, Iy)
+    M = np.array([[Ix2, Ixy],[Ixy, Iy2]])
+    detM = M[0,0] * M[1,1] - M[0,1] * M[1,0]
+    traceM = M[0,0] + M[1,1]
+    R = detM - 0.04 * traceM
+    return np.float32(R)
 
 def addNoise (img, n):
     size = np.shape(img)
@@ -113,7 +146,7 @@ def refresh (img):
     if version == 0:
         computeHarris (img)
     elif version == 1:
-        pass #mon harris
+        computeMyHarris (img)
     elif version == 2:
         computeShiTomasi (img)
     elif version == 3:
@@ -184,6 +217,3 @@ refresh(img)
 
 cv.waitKey(0)
 cv.destroyAllWindows()
-
-# # I == Idil après avoir dilaté I, séléctionne les indices des maximas locaux car
-# # seul eux ont la même valeur quand dilaté ou non
