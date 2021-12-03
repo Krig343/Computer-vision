@@ -19,15 +19,26 @@ def rotation (img, a):
     return cv.warpAffine(img, M, size)
 
 def computeHarris (img, angle, taille, noise):
-    img = scale (img, taille)
+    img = scale(img, taille)
     img = rotation (img, angle)
-    img = addNoise (img, noise)
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     gray = np.float32(gray)
     harrised = cv.cornerHarris(gray,3,3,0.04)
     harrised = cv.dilate(harrised,None)
     img[harrised>0.01*harrised.max()]=[0,0,255]
     cv.imshow('Harris cv',img)
+
+def computeShiTomasi (img, angle, taille, noise):
+    img = scale(img, taille)
+    img = rotation (img, angle)
+    gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    gray = np.float32(gray)
+    corners = cv.goodFeaturesToTrack(gray,25,0.01,10)
+    corners = np.int0(corners)
+    for i in corners:
+        x,y = i.ravel()
+        cv.circle(img,(x,y),3,255,-1)
+    cv.imshow('Harris cv', img)
 
 def computeIx(image):
     return cv.Sobel(image, -1, 1, 0, 3)
@@ -43,9 +54,17 @@ def computeSommeI (image):
 def computeR (mat):
     pass#A finir
 
-def addNoise (image, n):
-    size = np.shape(image)
-    return np.random.normal(0.0, n, size)
+# def addNoise (image, n):
+#     size = np.shape(image)
+#     M = np.random.normal((255/2), n, size)
+#     image = np.add(image, M)
+#     for x in range(size[0]):
+#         for y in range(size[1]):
+#             if image[x,y] < 0:
+#                 image[x,y] = 0
+#             if image[x,y] > 255:
+#                 image[x,y] = 255
+#     return image
 
 def refresh (img, angle, taille, version, noise):
     if version == 0:
@@ -53,7 +72,7 @@ def refresh (img, angle, taille, version, noise):
     elif version == 1:
         pass #mon harris
     elif version == 2:
-        pass #computeShiTomasi()
+        computeShiTomasi (img, angle, taille, noise)
     elif version == 3:
         pass #SIRF
 
