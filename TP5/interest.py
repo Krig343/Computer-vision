@@ -1,6 +1,9 @@
 import cv2 as cv
 import numpy as np
 import sys
+from matplotlib import pyplot as plt
+
+from numpy.core.defchararray import add
 np.set_printoptions(threshold=sys.maxsize)
 
 def scale (img, t):
@@ -23,6 +26,8 @@ def computeHarris (img, angle, taille, noise):
     img = rotation (img, angle)
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     gray = np.float32(gray)
+    gray = addNoise(gray, noise)
+    gray = np.uint8(gray)
     harrised = cv.cornerHarris(gray,3,3,0.04)
     harrised = cv.dilate(harrised,None)
     img[harrised>0.01*harrised.max()]=[0,0,255]
@@ -33,6 +38,8 @@ def computeShiTomasi (img, angle, taille, noise):
     img = rotation (img, angle)
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     gray = np.float32(gray)
+    gray = addNoise(gray, noise)
+    gray = np.uint8(gray)
     corners = cv.goodFeaturesToTrack(gray,25,0.01,10)
     corners = np.int0(corners)
     for i in corners:
@@ -40,31 +47,43 @@ def computeShiTomasi (img, angle, taille, noise):
         cv.circle(img,(x,y),3,255,-1)
     cv.imshow('Harris cv', img)
 
-def computeIx(image):
-    return cv.Sobel(image, -1, 1, 0, 3)
+def computeSIFT (img, angle, taille, noise):
+    img = scale(img, taille)
+    img = rotation (img, angle)
+    gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    gray = np.float32(gray)
+    gray = addNoise(gray, noise)
+    gray = np.uint8(gray)
+    sift = cv.xfeatures2d.SIFT_create()
+    kp = sift.detect(gray,None)
+    img=cv.drawKeypoints(gray,kp,img)
+    cv.imshow('Harris cv',img)
 
-def computeIy(img):
-    return cv.Sobel(img, -1, 0, 1, 3)
+# def computeIx(image):
+#     return cv.Sobel(image, -1, 1, 0, 3)
 
-def computeSommeI (image):
-    Ix = computeIx(image)
-    Iy = computeIy(image)
-    #A finir
+# def computeIy(img):
+#     return cv.Sobel(img, -1, 0, 1, 3)
+
+# def computeSommeI (image):
+#     Ix = computeIx(image)
+#     Iy = computeIy(image)
+#     #A finir
 
 def computeR (mat):
     pass#A finir
 
-# def addNoise (image, n):
-#     size = np.shape(image)
-#     M = np.random.normal((255/2), n, size)
-#     image = np.add(image, M)
-#     for x in range(size[0]):
-#         for y in range(size[1]):
-#             if image[x,y] < 0:
-#                 image[x,y] = 0
-#             if image[x,y] > 255:
-#                 image[x,y] = 255
-#     return image
+def addNoise (image, n):
+    size = np.shape(image)
+    M = np.random.normal((255/2), n, size)
+    image = np.add(image, M)
+    for x in range(size[0]):
+        for y in range(size[1]):
+            if image[x,y] < 0:
+                image[x,y] = 0
+            if image[x,y] > 255:
+                image[x,y] = 255
+    return image
 
 def refresh (img, angle, taille, version, noise):
     if version == 0:
@@ -74,7 +93,7 @@ def refresh (img, angle, taille, version, noise):
     elif version == 2:
         computeShiTomasi (img, angle, taille, noise)
     elif version == 3:
-        pass #SIRF
+        computeSIFT (img, angle, taille, noise)
 
 def update_angle (a):
     global angle
