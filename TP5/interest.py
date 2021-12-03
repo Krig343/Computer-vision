@@ -67,6 +67,22 @@ def computeSIFT (img):
     img=cv.drawKeypoints(gray,kp,img)
     cv.imshow('Harris cv',img)
 
+def computeORB (img):
+    img = scale(img, taille)
+    img = rotation (img, angle)
+    if persp:
+        img = perspective (img, p1, p2, p3, p4)
+    gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    gray = np.float32(gray)
+    gray = addNoise(gray, noise)
+    gray = np.uint8(gray)
+    orb = cv.ORB_create()
+    kp = orb.detect(img,None)
+    kp, des = orb.compute(img, kp)
+    img2 = cv.drawKeypoints(img,kp, des, color=(0,255,0), flags=0)
+    cv.imshow('Harris cv', img2)
+
+
 # def computeIx(image):
 #     return cv.Sobel(image, -1, 1, 0, 3)
 
@@ -103,7 +119,7 @@ def refresh (img):
     elif version == 3:
         computeSIFT (img)
     elif version == 4:
-        pass #ORB
+        computeORB (img)
 
 def update_angle (a):
     global angle
