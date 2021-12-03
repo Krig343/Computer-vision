@@ -177,6 +177,8 @@ def update_noise (n):
 def update_perspective (p):
     global persp, p1, p2, p3, p4
     if persp == 0:
+        print("points d'origine :")
+        print(p1 + p2 + p3 + p4)
         p1x = input("Entrez les coordonées x du premier point : ")
         p1y = input("Entrez les coordonées y du premier point : ")
         p1 = (int(p1x), int(p1y))
