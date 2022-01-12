@@ -3,15 +3,15 @@ import sys
 import matplotlib.pyplot as plt
 
 vid = cv.VideoCapture(0)
-plt.ion()
+plt.ion
 while(vid.isOpened()):
-      
+
     ret, frame = vid.read()
 
     gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
     cv.imshow('frame', gray)
-      
-    histo = cv.calcHist([gray], [0], None, [256], [0,256])
+
+    histo = cv.calcHist([gray], [0], None, [256], [0, 256])
     plt.plot(histo)
     plt.show()
     plt.pause(0.01)
