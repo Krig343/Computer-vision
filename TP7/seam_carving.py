@@ -2,7 +2,7 @@ import sys
 import numpy as np
 import cv2 as cv
 from scipy.ndimage.filters import convolve
-from skimage import filters, color
+# from skimage import filters, color, transform, util
 
 
 # Calculer l'énergie de chaque pixel
@@ -30,7 +30,7 @@ def energy(img):
     return energy_map
 
 
-# Calculer la liste de chemin à éliminer
+# Calculer la liste des pixels du chemin à éliminer
 def minimum_energy(img):
     size = img.shape
     energy_map = energy(img)
@@ -81,15 +81,58 @@ def remove(img, scale):
     return img
 
 
+def update(s):
+    global scale
+    scale = float(s)/100
+    if sys.argv[3] == 'v':
+        out = remove(img, scale)
+    else:
+        out = remove(I, scale)
+    return out
+
+
 scale = float(sys.argv[2])
+cv.namedWindow('seam')
+while (1):
 
-# Choisir l'image
-img = cv.imread(sys.argv[1])
+    cv.createTrackbar('scale', 'seam', int(100*scale), 100, update)
+    scale = cv.getTrackbarPos('scale', 'seam')
+    scale = float(scale)/100
 
-out = remove(img, scale)
+    # Choisir l'image
+    img = cv.imread(sys.argv[1])
+    if sys.argv[3] == 'v':
+        out = remove(img, scale)
+    elif sys.argv[3] == 'h':
+        I = img.copy()
+        I = cv.rotate(I, cv.ROTATE_90_CLOCKWISE)
+        out = remove(I, scale)
+        out = cv.rotate(out, cv.ROTATE_90_COUNTERCLOCKWISE)
+    else:
+        print("Bad usage ! python3 seam_carving <image> <scale> <v/h>\n")
 
-res = np.concatenate((img, out), axis=1)
+    # # Seam_carving de scikit-image
+    # img_s = util.img_as_float(img)
+    # eimg = filters.sobel(color.rgb2gray(img_s))
+    # size = img.shape
+    # new_col_nb = int(scale * size[1])
+    # if sys.argv[3] == 'v':
+    #   lib_out = transform.seam_carve(img_s, eimg, 'vertical', size[1]-new_col_nb)
+    # elif sys.argv[3] == 'h:
+    #   lib_out = transform.seam_carve(img_s, eimg, 'horizontal', size[1]-new_col_nb)
+    # else:
+    #   print("Bad usage\n")
 
-cv.imshow('seam', res)
-cv.waitKey(0)
+    # Utiliser l'image finale
+    # res = np.concatenate((lib_out, img), axis=1)
+    if sys.argv[3] == 'v':
+        res = np.concatenate((img, out), axis=1)
+    else:
+        res = np.concatenate((img, out), axis=0)
+
+    outputname = 'modified_' + sys.argv[1]
+    cv.imwrite(outputname, res)
+    cv.imshow('seam', res)
+    if cv.waitKey(0):
+        break
 cv.destroyAllWindows()
