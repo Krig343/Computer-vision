@@ -83,12 +83,13 @@ def remove(img, scale):
 
 def update(s):
     global scale
+    global out
     scale = float(s)/100
     if sys.argv[3] == 'v':
         out = remove(img, scale)
     else:
         out = remove(I, scale)
-    return out
+        out = cv.rotate(out, cv.ROTATE_90_COUNTERCLOCKWISE)
 
 
 scale = float(sys.argv[2])
@@ -118,17 +119,20 @@ while (1):
     # new_col_nb = int(scale * size[1])
     # if sys.argv[3] == 'v':
     #   lib_out = transform.seam_carve(img_s, eimg, 'vertical', size[1]-new_col_nb)
-    # elif sys.argv[3] == 'h:
+    # elif sys.argv[3] == 'h':
     #   lib_out = transform.seam_carve(img_s, eimg, 'horizontal', size[1]-new_col_nb)
     # else:
     #   print("Bad usage\n")
 
     # Utiliser l'image finale
-    # res = np.concatenate((lib_out, img), axis=1)
     if sys.argv[3] == 'v':
         res = np.concatenate((img, out), axis=1)
     else:
         res = np.concatenate((img, out), axis=0)
+    # if sys.arv[3] == 'v':
+    #   res = np.concatenate((res, lib_out), axis=1)
+    # else:
+    #    res = np.concatenate((res, lib_out), axis=0)
 
     outputname = 'modified_' + sys.argv[1]
     cv.imwrite(outputname, res)
